@@ -1,0 +1,13 @@
+@model VideoGamesStore.ViewModels.Account.LoginViewModel
+@{ ViewData["Title"] = "Вход"; }
+<div class="auth-card">
+    <h2>Вход в аккаунт</h2>
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3"><label asp-for="Login" class="form-label"></label><input asp-for="Login" class="form-control" placeholder="Логин или email" /><span asp-validation-for="Login" class="text-danger"></span></div>
+        <div class="mb-3"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" /><span asp-validation-for="Password" class="text-danger"></span></div>
+        <button class="btn btn-primary w-100" type="submit">Войти</button>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
