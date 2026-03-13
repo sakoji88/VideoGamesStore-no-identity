@@ -1,0 +1,51 @@
+@model VideoGamesStore.ViewModels.Cart.CartViewModel
+@{ ViewData["Title"] = "Корзина"; }
+<h2 class="mb-3">Корзина</h2>
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">Корзина пока пуста. Добавьте игру из каталога.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr><th>Игра</th><th>Цена</th><th>Количество</th><th>Сумма</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.UnitPrice.ToString("0.00") ₽</td>
+                    <td>
+                        <form asp-action="UpdateQuantity" method="post" class="d-flex gap-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderItemId" value="@item.OrderItemId" />
+                            <input type="number" min="1" max="99" name="quantity" value="@item.Quantity" class="form-control form-control-sm" style="max-width:90px" />
+                            <button class="btn btn-sm btn-outline-primary">OK</button>
+                        </form>
+                    </td>
+                    <td>@item.Total.ToString("0.00") ₽</td>
+                    <td>
+                        <form asp-action="Remove" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderItemId" value="@item.OrderItemId" />
+                            <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-3">
+        <div class="fs-4">Итого: <strong>@Model.GrandTotal.ToString("0.00") ₽</strong></div>
+        <form asp-action="Checkout" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="orderId" value="@Model.OrderId" />
+            <button class="btn btn-success btn-lg">Купить сейчас</button>
+        </form>
+    </div>
+}

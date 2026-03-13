@@ -1,72 +1,31 @@
-﻿@model VideoGamesStore.Models.Game
-
+@model VideoGamesStore.Models.Game
 @{
-    ViewData["Title"] = "Подробная информация";
+    ViewData["Title"] = Model.Title;
+
+    var imageUrl = string.IsNullOrWhiteSpace(Model.CoverImageUrl)
+        ? "/images/games/portal2.jpg"
+        : (Model.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            || Model.CoverImageUrl.StartsWith("/", StringComparison.OrdinalIgnoreCase)
+            ? Model.CoverImageUrl
+            : $"/images/games/{Model.CoverImageUrl.TrimStart('/')}");
 }
-
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-4">
-            @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
-            {
-                <img src="@Model.CoverImageUrl" alt="@Model.Title" class="img-fluid rounded shadow-sm" />
-            }
-            else
-            {
-                <div class="border rounded p-5 text-center text-muted">
-                    Нет изображения
-                </div>
-            }
-        </div>
-
-        <div class="col-md-8">
-            <h1>@Model.Title</h1>
-
-            <hr />
-
-            <p>
-                <strong>Жанр:</strong> @Model.Genre?.Name
-            </p>
-
-            <p>
-                <strong>Издатель:</strong> @(Model.Publisher?.Name ?? "Не указан")
-            </p>
-
-            <p>
-                <strong>Платформы:</strong> @string.Join(", ", Model.Platforms.Select(p => p.Name))
-            </p>
-
-            <p>
-                <strong>Дата релиза:</strong>
-                @(Model.ReleaseDate.HasValue? Model.ReleaseDate.Value.ToString("dd.MM.yyyy") : "Не указана")
-            </p>
-
-            <p>
-                <strong>Возрастной рейтинг:</strong> @(Model.AgeRating ?? "Не указан")
-            </p>
-
-            <p>
-                <strong>Рейтинг:</strong> @(Model.Rating?.ToString() ?? "Нет оценки")
-            </p>
-
-            <p>
-                <strong>Остаток:</strong> @Model.Stock
-            </p>
-
-            <p class="fs-4">
-                <strong>Цена:</strong> @Model.Price.ToString("0.00") ₽
-            </p>
-
-            <div class="mt-4">
-                <h4>Описание</h4>
-                <p>
-                    @(string.IsNullOrWhiteSpace(Model.Description) ? "Описание отсутствует." : Model.Description)
-                </p>
+<div class="row g-4">
+    <div class="col-md-5">
+        <img class="img-fluid rounded shadow" src="@imageUrl" alt="@Model.Title" />
+    </div>
+    <div class="col-md-7">
+        <h1>@Model.Title</h1>
+        <p class="text-secondary">@Model.Genre?.Name · @(Model.Publisher?.Name ?? "Неизвестно")</p>
+        <p>@Model.Description</p>
+        <p><strong>Платформы:</strong> @string.Join(", ", Model.Platforms.Select(x => x.Name))</p>
+        <p><strong>Рейтинг:</strong> @(Model.Rating?.ToString("0.0") ?? "Нет")</p>
+        <p class="fs-3 fw-bold">@Model.Price.ToString("0.00") ₽</p>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="d-flex gap-2">
+                <form asp-controller="Cart" asp-action="Add" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@Model.Id" /><button class="btn btn-outline-success">Добавить в корзину</button></form>
+                <form asp-controller="Cart" asp-action="BuyNow" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@Model.Id" /><button class="btn btn-success">Купить</button></form>
             </div>
-
-            <div class="mt-4">
-                <a asp-action="Index" class="btn btn-secondary">Назад к каталогу</a>
-            </div>
-        </div>
+        }
     </div>
 </div>
