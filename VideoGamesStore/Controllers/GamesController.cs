@@ -94,6 +94,7 @@ public class GamesController : Controller
             return View(game);
         }
         game.Platforms = await _context.Platforms.Where(p => selectedPlatforms.Contains(p.Id)).ToListAsync();
+        game.CreatedAt = DateTime.UtcNow;
         _context.Games.Add(game);
         await _context.SaveChangesAsync();
         TempData["Success"] = "Игра добавлена.";

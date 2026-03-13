@@ -185,11 +185,12 @@ public class CartController : Controller
 
     private async Task<decimal> CalculateOrderTotalAsync(int orderId)
     {
-        return await _context.OrderItems
+        var total = await _context.OrderItems
             .Where(i => i.OrderId == orderId)
-            .Select(i => i.UnitPrice * i.Quantity)
-            .DefaultIfEmpty(0m)
+            .Select(i => (decimal?)(i.UnitPrice * i.Quantity))
             .SumAsync();
+
+        return total ?? 0m;
     }
 
     private async Task<Order> GetOrCreateCartAsync()
