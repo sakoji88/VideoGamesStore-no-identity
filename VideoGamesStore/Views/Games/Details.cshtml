@@ -11,7 +11,10 @@
         <p class="fs-3 fw-bold">@Model.Price.ToString("0.00") ₽</p>
         @if (User.Identity?.IsAuthenticated == true)
         {
-            <form asp-controller="Cart" asp-action="Add" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@Model.Id" /><button class="btn btn-success">Добавить в корзину</button></form>
+            <div class="d-flex gap-2">
+                <form asp-controller="Cart" asp-action="Add" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@Model.Id" /><button class="btn btn-outline-success">Добавить в корзину</button></form>
+                <form asp-controller="Cart" asp-action="BuyNow" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@Model.Id" /><button class="btn btn-success">Купить</button></form>
+            </div>
         }
     </div>
 </div>

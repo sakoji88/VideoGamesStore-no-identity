@@ -19,7 +19,7 @@ public partial class Game
 
     public DateOnly? ReleaseDate { get; set; }
 
-    [Range(typeof(decimal), "0.01", "999999.99")]
+    [Range(typeof(decimal), "0,01", "999999,99")]
     [Column(TypeName = "decimal(10, 2)")]
     public decimal Price { get; set; }
 

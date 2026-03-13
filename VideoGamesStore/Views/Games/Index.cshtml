@@ -35,7 +35,10 @@
                 <a asp-action="Details" asp-route-id="@game.Id" class="btn btn-primary mb-2">Подробнее</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <form asp-controller="Cart" asp-action="Add" method="post">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@game.Id" /><button class="btn btn-outline-success w-100">В корзину</button></form>
+                    <div class="d-grid gap-2">
+                        <form asp-controller="Cart" asp-action="Add" method="post">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@game.Id" /><button class="btn btn-outline-success w-100">В корзину</button></form>
+                        <form asp-controller="Cart" asp-action="BuyNow" method="post">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@game.Id" /><button class="btn btn-success w-100">Купить</button></form>
+                    </div>
                 }
                 @if (User.IsInRole("Admin"))
                 {
