@@ -1,9 +1,21 @@
 @model VideoGamesStore.Models.Game
 @{
     ViewData["Title"] = Model.Title;
-    var imageUrl = string.IsNullOrWhiteSpace(Model.CoverImageUrl)
+
+    var rawCover = Model.CoverImageUrl?.Trim();
+    var normalizedCover = rawCover?.Replace("\\", "/");
+
+    var imageUrl = string.IsNullOrWhiteSpace(normalizedCover)
         ? "/images/games/portal2.jpg"
-        : Model.CoverImageUrl;
+        : normalizedCover.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+          || normalizedCover.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+          || normalizedCover.StartsWith("/", StringComparison.OrdinalIgnoreCase)
+            ? normalizedCover
+            : normalizedCover.StartsWith("~/", StringComparison.OrdinalIgnoreCase)
+                ? $"/{normalizedCover[2..]}"
+                : normalizedCover.StartsWith("images/", StringComparison.OrdinalIgnoreCase)
+                    ? $"/{normalizedCover}"
+                    : $"/images/games/{normalizedCover.TrimStart('/')}";
 }
 <div class="row g-4">
     <div class="col-md-5">
