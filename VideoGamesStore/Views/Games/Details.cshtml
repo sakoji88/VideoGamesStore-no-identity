@@ -1,13 +1,9 @@
 @model VideoGamesStore.Models.Game
 @{
     ViewData["Title"] = Model.Title;
-
     var imageUrl = string.IsNullOrWhiteSpace(Model.CoverImageUrl)
         ? "/images/games/portal2.jpg"
-        : (Model.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            || Model.CoverImageUrl.StartsWith("/", StringComparison.OrdinalIgnoreCase)
-            ? Model.CoverImageUrl
-            : $"/images/games/{Model.CoverImageUrl.TrimStart('/')}");
+        : Model.CoverImageUrl;
 }
 <div class="row g-4">
     <div class="col-md-5">
