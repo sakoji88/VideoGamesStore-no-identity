@@ -1,0 +1,72 @@
+﻿@model VideoGamesStore.Models.Game
+
+@{
+    ViewData["Title"] = "Подробная информация";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+            {
+                <img src="@Model.CoverImageUrl" alt="@Model.Title" class="img-fluid rounded shadow-sm" />
+            }
+            else
+            {
+                <div class="border rounded p-5 text-center text-muted">
+                    Нет изображения
+                </div>
+            }
+        </div>
+
+        <div class="col-md-8">
+            <h1>@Model.Title</h1>
+
+            <hr />
+
+            <p>
+                <strong>Жанр:</strong> @Model.Genre?.Name
+            </p>
+
+            <p>
+                <strong>Издатель:</strong> @(Model.Publisher?.Name ?? "Не указан")
+            </p>
+
+            <p>
+                <strong>Платформы:</strong> @string.Join(", ", Model.Platforms.Select(p => p.Name))
+            </p>
+
+            <p>
+                <strong>Дата релиза:</strong>
+                @(Model.ReleaseDate.HasValue? Model.ReleaseDate.Value.ToString("dd.MM.yyyy") : "Не указана")
+            </p>
+
+            <p>
+                <strong>Возрастной рейтинг:</strong> @(Model.AgeRating ?? "Не указан")
+            </p>
+
+            <p>
+                <strong>Рейтинг:</strong> @(Model.Rating?.ToString() ?? "Нет оценки")
+            </p>
+
+            <p>
+                <strong>Остаток:</strong> @Model.Stock
+            </p>
+
+            <p class="fs-4">
+                <strong>Цена:</strong> @Model.Price.ToString("0.00") ₽
+            </p>
+
+            <div class="mt-4">
+                <h4>Описание</h4>
+                <p>
+                    @(string.IsNullOrWhiteSpace(Model.Description) ? "Описание отсутствует." : Model.Description)
+                </p>
+            </div>
+
+            <div class="mt-4">
+                <a asp-action="Index" class="btn btn-secondary">Назад к каталогу</a>
+            </div>
+        </div>
+    </div>
+</div>

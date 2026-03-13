@@ -1,0 +1,131 @@
+﻿@model IEnumerable<VideoGamesStore.Models.Game>
+
+@{
+    ViewData["Title"] = "Каталог игр";
+}
+
+<h1 class="mb-4">Каталог игр</h1>
+
+<form method="get" asp-action="Index" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label class="form-label">Поиск по названию</label>
+        <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Введите название игры" />
+    </div>
+    
+    <a asp-action="Create" class="btn btn-success mb-3">
+        Добавить игру
+    </a>
+
+    <div class="col-md-3">
+        <label class="form-label">Жанр</label>
+        <select name="genreId" class="form-select" asp-items="ViewBag.Genres">
+            <option value="">Все жанры</option>
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Платформа</label>
+        <select name="platformId" class="form-select" asp-items="ViewBag.Platforms">
+            <option value="">Все платформы</option>
+        </select>
+    </div>
+
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Применить</button>
+    </div>
+</form>
+
+<div class="mb-3">
+    <a asp-action="Index"
+           asp-route-searchString="@ViewData["CurrentFilter"]"
+           asp-route-genreId="@ViewData["CurrentGenre"]"
+           asp-route-platformId="@ViewData["CurrentPlatform"]"
+           asp-route-sortOrder="@ViewData["TitleSort"]"
+           class="btn btn-outline-secondary me-2">
+        Сортировка по названию
+    </a>
+
+    <a asp-action="Index"
+           asp-route-searchString="@ViewData["CurrentFilter"]"
+           asp-route-genreId="@ViewData["CurrentGenre"]"
+           asp-route-platformId="@ViewData["CurrentPlatform"]"
+           asp-route-sortOrder="@ViewData["PriceSort"]"
+           class="btn btn-outline-secondary">
+        Сортировка по цене
+    </a>
+</div>
+
+<div class="row">
+    @if (!Model.Any())
+    {
+        <div class="col-12">
+            <div class="alert alert-warning text-center">
+                Игры не найдены
+            </div>
+        </div>
+    }
+    else
+    {
+        @foreach (var game in Model)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    @if (!string.IsNullOrEmpty(game.CoverImageUrl))
+                    {
+                        <img src="@game.CoverImageUrl"
+                             class="card-img-top"
+                             alt="@game.Title"
+                             style="height: 300px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center justify-content-center bg-light text-muted"
+                             style="height: 300px;">
+                            Нет изображения
+                        </div>
+                    }
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@game.Title</h5>
+
+                        <p class="card-text mb-1">
+                            <strong>Жанр:</strong> @game.Genre?.Name
+                        </p>
+
+                        <p class="card-text mb-1">
+                            <strong>Издатель:</strong> @(game.Publisher?.Name ?? "Не указан")
+                        </p>
+
+                        <p class="card-text mb-1">
+                            <strong>Платформы:</strong> @string.Join(", ", game.Platforms.Select(p => p.Name))
+                        </p>
+
+                        <p class="card-text mb-1">
+                            <strong>Рейтинг:</strong> @(game.Rating?.ToString() ?? "Нет оценки")
+                        </p>
+
+                        <p class="card-text mb-3">
+                            <strong>Остаток:</strong> @game.Stock
+                        </p>
+
+                        <div class="mt-auto">
+                            <p class="fs-5 fw-bold">@game.Price.ToString("0.00") ₽</p>
+
+                            <a asp-action="Details" asp-route-id="@game.Id" class="btn btn-primary w-100">
+                                Подробнее
+                            </a>
+                            <div class="d-grid gap-2">
+                                <a asp-action="Edit" asp-route-id="@game.Id" class="btn btn-outline-warning">
+                                    Редактировать
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@game.Id" class="btn btn-outline-danger">
+                                    Удалить
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

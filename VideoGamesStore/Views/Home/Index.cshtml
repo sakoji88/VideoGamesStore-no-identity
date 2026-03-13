@@ -1,0 +1,33 @@
+﻿@model IEnumerable<VideoGamesStore.Models.Game>
+
+@{
+    ViewData["Title"] = "Главная";
+}
+
+<h1>Каталог игр</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Жанр</th>
+            <th>Издатель</th>
+            <th>Цена</th>
+            <th>Остаток</th>
+            <th>Рейтинг</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var game in Model)
+        {
+            <tr>
+                <td>@game.Title</td>
+                <td>@game.Genre?.Name</td>
+                <td>@game.Publisher?.Name</td>
+                <td>@game.Price</td>
+                <td>@game.Stock</td>
+                <td>@game.Rating</td>
+            </tr>
+        }
+    </tbody>
+</table>
