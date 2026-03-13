@@ -1,33 +1,18 @@
-﻿@model IEnumerable<VideoGamesStore.Models.Game>
-
-@{
-    ViewData["Title"] = "Главная";
+@model IEnumerable<VideoGamesStore.Models.Game>
+@{ ViewData["Title"] = "Главная"; }
+<section class="hero p-4 mb-4 rounded-4">
+    <h1>VideoGamesStore</h1>
+    <p>Современный магазин цифровых игр: хиты, новинки и скидки.</p>
+    <a asp-controller="Games" asp-action="Index" class="btn btn-primary">Перейти в каталог</a>
+</section>
+<div class="row g-4">
+@foreach (var game in Model.Take(6))
+{
+    <div class="col-sm-6 col-lg-4">
+        <div class="card game-card h-100">
+            <img src="@(string.IsNullOrWhiteSpace(game.CoverImageUrl) ? "/images/games/gta5.jpg" : game.CoverImageUrl)" class="card-img-top" alt="@game.Title" />
+            <div class="card-body"><h5>@game.Title</h5><p class="small text-secondary">@game.Genre?.Name</p><p class="fw-bold">@game.Price.ToString("0.00") ₽</p></div>
+        </div>
+    </div>
 }
-
-<h1>Каталог игр</h1>
-
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Название</th>
-            <th>Жанр</th>
-            <th>Издатель</th>
-            <th>Цена</th>
-            <th>Остаток</th>
-            <th>Рейтинг</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var game in Model)
-        {
-            <tr>
-                <td>@game.Title</td>
-                <td>@game.Genre?.Name</td>
-                <td>@game.Publisher?.Name</td>
-                <td>@game.Price</td>
-                <td>@game.Stock</td>
-                <td>@game.Rating</td>
-            </tr>
-        }
-    </tbody>
-</table>
+</div>
