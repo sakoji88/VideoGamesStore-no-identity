@@ -1,108 +1,19 @@
-﻿@model VideoGamesStore.Models.Game
-
-@{
-    ViewData["Title"] = "Добавить игру";
-}
-
+@model VideoGamesStore.Models.Game
+@{ ViewData["Title"] = "Добавить игру"; }
 <h2 class="mb-4">Добавить игру</h2>
-
 <form asp-action="Create" method="post">
     @Html.AntiForgeryToken()
-
-    <div class="mb-3">
-        <label asp-for="Title" class="form-label">Название</label>
-        <input asp-for="Title" class="form-control" />
-        <span asp-validation-for="Title" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Description" class="form-label">Описание</label>
-        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Price" class="form-label">Цена</label>
-        <input name="Price" value="@Model.Price.ToString().Replace('.', ',')" class="form-control" />
-        <span asp-validation-for="Price" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Stock" class="form-label">Остаток</label>
-        <input asp-for="Stock" class="form-control" />
-        <span asp-validation-for="Stock" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label d-block">Жанр</label>
-        <div class="d-flex gap-2">
-            <select asp-for="GenreId" asp-items="ViewBag.Genres" class="form-select"></select>
-            <button type="button" class="btn btn-outline-success" onclick="toggleBlock('genreBlock')">+</button>
-        </div>
-        <span asp-validation-for="GenreId" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label d-block">Издатель</label>
-        <div class="d-flex gap-2">
-            <select asp-for="PublisherId" asp-items="ViewBag.Publishers" class="form-select"></select>
-            <button type="button" class="btn btn-outline-success" onclick="toggleBlock('publisherBlock')">+</button>
-        </div>
-        <span asp-validation-for="PublisherId" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Платформы</label>
-        <select name="selectedPlatforms" asp-items="ViewBag.Platforms" multiple class="form-select"></select>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="CoverImageUrl" class="form-label">Путь к изображению</label>
-        <input asp-for="CoverImageUrl" class="form-control" placeholder="/images/games/example.jpg" />
-        <span asp-validation-for="CoverImageUrl" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Создать игру</button>
-    <a asp-action="Index" class="btn btn-secondary">Назад</a>
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /><span asp-validation-for="Title" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="4"></textarea><span asp-validation-for="Description" class="text-danger"></span></div>
+    <div class="row"><div class="col-md-4 mb-3"><label asp-for="Price" class="form-label"></label><input asp-for="Price" class="form-control" type="number" min="0.01" step="0.01" /><span asp-validation-for="Price" class="text-danger"></span></div><div class="col-md-4 mb-3"><label asp-for="Stock" class="form-label"></label><input asp-for="Stock" class="form-control" type="number" min="0" /><span asp-validation-for="Stock" class="text-danger"></span></div><div class="col-md-4 mb-3"><label asp-for="Rating" class="form-label"></label><input asp-for="Rating" class="form-control" type="number" min="0" max="10" step="0.1" /></div></div>
+    <div class="mb-3"><label class="form-label">Жанр</label><select asp-for="GenreId" asp-items="ViewBag.Genres" class="form-select"></select></div>
+    <div class="mb-3"><label class="form-label">Издатель</label><select asp-for="PublisherId" asp-items="ViewBag.Publishers" class="form-select"><option value="">Не указан</option></select></div>
+    <div class="mb-3"><label class="form-label">Платформы</label><select name="selectedPlatforms" asp-items="ViewBag.Platforms" multiple class="form-select"></select></div>
+    <div class="mb-3"><label asp-for="CoverImageUrl" class="form-label"></label><input asp-for="CoverImageUrl" class="form-control" /></div>
+    <div class="mb-3"><label asp-for="ReleaseDate" class="form-label"></label><input asp-for="ReleaseDate" type="date" class="form-control" /></div>
+    <div class="mb-3"><label asp-for="AgeRating" class="form-label"></label><input asp-for="AgeRating" class="form-control" /></div>
+    <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
+    <button type="submit" class="btn btn-primary">Создать</button>
 </form>
-
-<hr class="my-4" />
-
-<div id="genreBlock" style="display:none;" class="mb-4">
-    <h5>Добавить новый жанр</h5>
-    <form asp-action="AddGenre" method="post">
-        @Html.AntiForgeryToken()
-        <div class="input-group">
-            <input type="text" name="genreName" class="form-control" placeholder="Введите жанр" />
-            <button type="submit" class="btn btn-success">Добавить жанр</button>
-        </div>
-    </form>
-</div>
-
-<div id="publisherBlock" style="display:none;" class="mb-4">
-    <h5>Добавить нового издателя</h5>
-    <form asp-action="AddPublisher" method="post">
-        @Html.AntiForgeryToken()
-        <div class="input-group">
-            <input type="text" name="publisherName" class="form-control" placeholder="Введите издателя" />
-            <button type="submit" class="btn btn-success">Добавить издателя</button>
-        </div>
-    </form>
-</div>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-
-    <script>
-        function toggleBlock(id) {
-            const block = document.getElementById(id);
-            if (block.style.display === "none" || block.style.display === "") {
-                block.style.display = "block";
-            } else {
-                block.style.display = "none";
-            }
-        }
-    </script>
-}
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

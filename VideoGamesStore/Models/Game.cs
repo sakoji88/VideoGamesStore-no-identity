@@ -1,8 +1,5 @@
-﻿    using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace VideoGamesStore.Models;
 
@@ -13,18 +10,23 @@ public partial class Game
 
     public int? RawgId { get; set; }
 
-    [StringLength(200)]
+    [Required]
+    [StringLength(200, MinimumLength = 2)]
     public string Title { get; set; } = null!;
 
+    [StringLength(4000)]
     public string? Description { get; set; }
 
     public DateOnly? ReleaseDate { get; set; }
 
+    [Range(typeof(decimal), "0,01", "999999,99")]
     [Column(TypeName = "decimal(10, 2)")]
     public decimal Price { get; set; }
 
+    [Range(0, 100000)]
     public int Stock { get; set; }
 
+    [Range(typeof(decimal), "0", "10")]
     [Column(TypeName = "decimal(3, 1)")]
     public decimal? Rating { get; set; }
 
