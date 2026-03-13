@@ -1,7 +1,18 @@
 @model VideoGamesStore.Models.Game
-@{ ViewData["Title"] = Model.Title; }
+@{
+    ViewData["Title"] = Model.Title;
+
+    var imageUrl = string.IsNullOrWhiteSpace(Model.CoverImageUrl)
+        ? "/images/games/portal2.jpg"
+        : (Model.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            || Model.CoverImageUrl.StartsWith("/", StringComparison.OrdinalIgnoreCase)
+            ? Model.CoverImageUrl
+            : $"/images/games/{Model.CoverImageUrl.TrimStart('/')}");
+}
 <div class="row g-4">
-    <div class="col-md-5"><img class="img-fluid rounded shadow" src="@(string.IsNullOrWhiteSpace(Model.CoverImageUrl) ? "/images/games/portal2.jpg" : Model.CoverImageUrl)" alt="@Model.Title" /></div>
+    <div class="col-md-5">
+        <img class="img-fluid rounded shadow" src="@imageUrl" alt="@Model.Title" />
+    </div>
     <div class="col-md-7">
         <h1>@Model.Title</h1>
         <p class="text-secondary">@Model.Genre?.Name · @(Model.Publisher?.Name ?? "Неизвестно")</p>
