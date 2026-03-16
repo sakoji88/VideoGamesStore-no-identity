@@ -1,0 +1,50 @@
+@model IEnumerable<VideoGamesStore.ViewModels.Admin.ReviewModerationViewModel>
+@{
+    ViewData["Title"] = "Модерация отзывов";
+}
+
+<h2 class="mb-3">Модерация отзывов</h2>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-5">
+        <input class="form-control" name="search" value="@ViewBag.Search" placeholder="Поиск по игре или пользователю" />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-outline-light w-100">Найти</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-dark table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Игра</th>
+                <th>Пользователь</th>
+                <th>Оценка</th>
+                <th>Комментарий</th>
+                <th>Статус</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var review in Model)
+        {
+            <tr>
+                <td><a class="link-light" asp-controller="Games" asp-action="Details" asp-route-id="@review.GameId">@review.GameTitle</a></td>
+                <td>@review.Username</td>
+                <td>@review.Rating / 5</td>
+                <td>@(string.IsNullOrWhiteSpace(review.Comment) ? "—" : review.Comment)</td>
+                <td>@(review.IsVisible ? "Опубликован" : "Скрыт")</td>
+                <td>
+                    <form asp-action="ToggleReviewVisibility" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@review.Id" />
+                        <button class="btn btn-sm @(review.IsVisible ? "btn-outline-warning" : "btn-outline-success")">
+                            @(review.IsVisible ? "Скрыть" : "Опубликовать")
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

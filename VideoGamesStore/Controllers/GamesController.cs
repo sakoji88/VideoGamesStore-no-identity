@@ -1,12 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using VideoGamesStore.Models;
+using VideoGamesStore.ViewModels.Games;
 
 namespace VideoGamesStore.Controllers
 {
     public class GamesController : Controller
     {
+        private const int PageSize = 9;
         private readonly VideoGamesStoreContext _context;
 
         public GamesController(VideoGamesStoreContext context)
@@ -14,65 +22,70 @@ namespace VideoGamesStore.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index(string searchString, int? genreId, int? platformId, string sortOrder)
+        public async Task<IActionResult> Index(string searchString, int? genreId, int? platformId, string sortOrder, int page = 1)
         {
-            ViewData["CurrentFilter"] = searchString;
-            ViewData["CurrentGenre"] = genreId;
-            ViewData["CurrentPlatform"] = platformId;
-            ViewData["TitleSort"] = string.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
-            ViewData["PriceSort"] = sortOrder == "price_asc" ? "price_desc" : "price_asc";
-            ViewData["CurrentSort"] = sortOrder;
-
-            var gamesQuery = _context.Games
+            var query = _context.Games
                 .Include(g => g.Genre)
                 .Include(g => g.Publisher)
                 .Include(g => g.Platforms)
                 .AsQueryable();
 
+            if (!User.IsInRole("Admin"))
+            {
+                query = query.Where(g => g.IsActive);
+            }
+
             if (!string.IsNullOrWhiteSpace(searchString))
             {
-                gamesQuery = gamesQuery.Where(g => g.Title.Contains(searchString));
+                query = query.Where(g => g.Title.Contains(searchString));
             }
 
             if (genreId.HasValue)
             {
-                gamesQuery = gamesQuery.Where(g => g.GenreId == genreId.Value);
+                query = query.Where(g => g.GenreId == genreId.Value);
             }
 
             if (platformId.HasValue)
             {
-                gamesQuery = gamesQuery.Where(g => g.Platforms.Any(p => p.Id == platformId.Value));
+                query = query.Where(g => g.Platforms.Any(p => p.Id == platformId.Value));
             }
 
-            gamesQuery = sortOrder switch
+            switch (sortOrder)
             {
-                "title_desc" => gamesQuery.OrderByDescending(g => g.Title),
-                "price_asc" => gamesQuery.OrderBy(g => g.Price),
-                "price_desc" => gamesQuery.OrderByDescending(g => g.Price),
-                _ => gamesQuery.OrderBy(g => g.Title)
-            };
+                case "title_desc":
+                    query = query.OrderByDescending(g => g.Title);
+                    break;
+                case "price_asc":
+                    query = query.OrderBy(g => g.Price);
+                    break;
+                case "price_desc":
+                    query = query.OrderByDescending(g => g.Price);
+                    break;
+                default:
+                    query = query.OrderBy(g => g.Title);
+                    break;
+            }
 
-            ViewBag.Genres = new SelectList(
-     await _context.Genres.OrderBy(g => g.Name).ToListAsync(),
-     "Id",
-     "Name",
-     genreId
- );
+            var safePage = Math.Max(page, 1);
+            var totalItems = await query.CountAsync();
 
-            ViewBag.Platforms = new SelectList(
-                await _context.Platforms.OrderBy(p => p.Name).ToListAsync(),
-                "Id",
-                "Name",
-                platformId
-            );
+            var model = new GamesIndexViewModel();
+            model.Items = await query.Skip((safePage - 1) * PageSize).Take(PageSize).ToListAsync();
+            model.Genres = new SelectList(await _context.Genres.OrderBy(g => g.Name).ToListAsync(), "Id", "Name", genreId);
+            model.Platforms = new SelectList(await _context.Platforms.OrderBy(p => p.Name).ToListAsync(), "Id", "Name", platformId);
+            model.SearchString = searchString;
+            model.GenreId = genreId;
+            model.PlatformId = platformId;
+            model.SortOrder = sortOrder;
+            model.Page = safePage;
+            model.TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
 
-            var games = await gamesQuery.ToListAsync();
-
-            return View(games);
+            return View(model);
         }
+
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
+            if (!id.HasValue)
             {
                 return NotFound();
             }
@@ -81,207 +94,221 @@ namespace VideoGamesStore.Controllers
                 .Include(g => g.Genre)
                 .Include(g => g.Publisher)
                 .Include(g => g.Platforms)
-                .FirstOrDefaultAsync(g => g.Id == id);
+                .FirstOrDefaultAsync(g => g.Id == id.Value);
 
-            if (game == null)
+            if (game == null || (!game.IsActive && !User.IsInRole("Admin")))
             {
                 return NotFound();
             }
 
-            return View(game);
+            var reviews = await _context.Reviews
+                .Include(r => r.User)
+                .Where(r => r.GameId == game.Id && (r.IsVisible || User.IsInRole("Admin")))
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
 
+            var model = new GameDetailsViewModel();
+            model.Game = game;
+            model.Reviews = reviews.Select(r => new ReviewViewModel
+            {
+                Id = r.Id,
+                Username = r.User.Username,
+                Rating = r.Rating,
+                Comment = r.Comment,
+                CreatedAt = r.CreatedAt
+            }).ToList();
+            model.NewReview = new AddReviewViewModel { GameId = game.Id };
+
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                var userId = GetCurrentUserId();
+                model.HasPurchasedGame = await _context.OrderItems.AnyAsync(i =>
+                    i.GameId == game.Id && i.Order.UserId == userId && i.Order.Status == "Оформлен");
+                model.HasReview = await _context.Reviews.AnyAsync(r => r.GameId == game.Id && r.UserId == userId);
+                model.CanLeaveReview = model.HasPurchasedGame && !model.HasReview;
+            }
+
+            return View(model);
         }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddReview(AddReviewViewModel model)
+        {
+            var game = await _context.Games.FirstOrDefaultAsync(g => g.Id == model.GameId);
+            if (game == null || (!game.IsActive && !User.IsInRole("Admin")))
+            {
+                return NotFound();
+            }
+
+            var userId = GetCurrentUserId();
+            var hasPurchased = await _context.OrderItems.AnyAsync(i =>
+                i.GameId == model.GameId && i.Order.UserId == userId && i.Order.Status == "Оформлен");
+
+            if (!hasPurchased)
+            {
+                TempData["Error"] = "Оставлять отзывы могут только пользователи, купившие игру.";
+                return RedirectToAction("Details", new { id = model.GameId });
+            }
+
+            var alreadyReviewed = await _context.Reviews.AnyAsync(r => r.GameId == model.GameId && r.UserId == userId);
+            if (alreadyReviewed)
+            {
+                TempData["Error"] = "Вы уже оставили отзыв на эту игру.";
+                return RedirectToAction("Details", new { id = model.GameId });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Проверьте корректность оценки и текста отзыва.";
+                return RedirectToAction("Details", new { id = model.GameId });
+            }
+
+            _context.Reviews.Add(new Review
+            {
+                GameId = model.GameId,
+                UserId = userId,
+                Rating = model.Rating,
+                Comment = string.IsNullOrWhiteSpace(model.Comment) ? null : model.Comment.Trim(),
+                CreatedAt = DateTime.UtcNow,
+                IsVisible = false
+            });
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Отзыв отправлен на модерацию и появится после подтверждения администратором.";
+            return RedirectToAction("Details", new { id = model.GameId });
+        }
+
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
-            ViewBag.Genres = new SelectList(_context.Genres.OrderBy(g => g.Name), "Id", "Name");
-            ViewBag.Publishers = new SelectList(_context.Publishers.OrderBy(p => p.Name), "Id", "Name");
-            ViewBag.Platforms = new MultiSelectList(_context.Platforms.OrderBy(p => p.Name), "Id", "Name");
-
-            return View(new Game());
+            FillMeta(null, null, null);
+            return View(new Game { IsActive = true });
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddGenre(string genreName)
         {
             if (!string.IsNullOrWhiteSpace(genreName))
             {
-                bool exists = await _context.Genres
-                    .AnyAsync(g => g.Name == genreName);
-
+                var normalized = genreName.Trim();
+                var exists = await _context.Genres.AnyAsync(g => g.Name == normalized);
                 if (!exists)
                 {
-                    _context.Genres.Add(new Genre
-                    {
-                        Name = genreName
-                    });
-
+                    _context.Genres.Add(new Genre { Name = normalized });
                     await _context.SaveChangesAsync();
                 }
             }
 
-            return RedirectToAction(nameof(Create));
+            return RedirectToAction("Create");
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddPublisher(string publisherName)
         {
             if (!string.IsNullOrWhiteSpace(publisherName))
             {
-                bool exists = await _context.Publishers
-                    .AnyAsync(p => p.Name == publisherName);
-
+                var normalized = publisherName.Trim();
+                var exists = await _context.Publishers.AnyAsync(p => p.Name == normalized);
                 if (!exists)
                 {
-                    _context.Publishers.Add(new Publisher
-                    {
-                        Name = publisherName
-                    });
-
+                    _context.Publishers.Add(new Publisher { Name = normalized });
                     await _context.SaveChangesAsync();
                 }
             }
 
-            return RedirectToAction(nameof(Create));
+            return RedirectToAction("Create");
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-    string Title,
-    string? Description,
-    decimal Price,
-    int Stock,
-    int GenreId,
-    int? PublisherId,
-    string? CoverImageUrl,
-    DateOnly? ReleaseDate,
-    decimal? Rating,
-    string? AgeRating,
-    bool IsActive,
-    int[] selectedPlatforms)
+        public async Task<IActionResult> Create(Game game, int[] selectedPlatforms)
         {
-            var game = new Game
+            if (selectedPlatforms == null)
             {
-                Title = Title,
-                Description = Description,
-                Price = Price,
-                Stock = Stock,
-                GenreId = GenreId,
-                PublisherId = PublisherId,
-                CoverImageUrl = CoverImageUrl,
-                ReleaseDate = ReleaseDate,
-                Rating = Rating,
-                AgeRating = AgeRating,
-                IsActive = IsActive
-            };
-
-            if (selectedPlatforms != null)
-            {
-                foreach (var platformId in selectedPlatforms)
-                {
-                    var platform = await _context.Platforms.FindAsync(platformId);
-                    if (platform != null)
-                    {
-                        game.Platforms.Add(platform);
-                    }
-                }
+                selectedPlatforms = Array.Empty<int>();
             }
+
+            if (!ModelState.IsValid)
+            {
+                FillMeta(game.GenreId, game.PublisherId, selectedPlatforms);
+                return View(game);
+            }
+
+            game.Platforms = await _context.Platforms.Where(p => selectedPlatforms.Contains(p.Id)).ToListAsync();
+            game.CreatedAt = DateTime.UtcNow;
 
             _context.Games.Add(game);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Index));
+            TempData["Success"] = "Игра добавлена.";
+            return RedirectToAction("Index");
         }
-        public async Task<IActionResult> Edit(int? id)
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var game = await _context.Games
-                .Include(g => g.Platforms)
-                .FirstOrDefaultAsync(g => g.Id == id);
-
+            var game = await _context.Games.Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
             if (game == null)
             {
                 return NotFound();
             }
 
-            ViewBag.Genres = new SelectList(_context.Genres.OrderBy(g => g.Name), "Id", "Name", game.GenreId);
-            ViewBag.Publishers = new SelectList(_context.Publishers.OrderBy(p => p.Name), "Id", "Name", game.PublisherId);
-            ViewBag.Platforms = new MultiSelectList(
-                _context.Platforms.OrderBy(p => p.Name),
-                "Id",
-                "Name",
-                game.Platforms.Select(p => p.Id)
-            );
-
+            FillMeta(game.GenreId, game.PublisherId, game.Platforms.Select(p => p.Id));
             return View(game);
-
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-    int id,
-    string Title,
-    string? Description,
-    decimal Price,
-    int Stock,
-    int GenreId,
-    int? PublisherId,
-    string? CoverImageUrl,
-    DateOnly? ReleaseDate,
-    decimal? Rating,
-    string? AgeRating,
-    bool IsActive,
-    int[] selectedPlatforms)
+        public async Task<IActionResult> Edit(int id, Game model, int[] selectedPlatforms)
         {
-            var gameFromDb = await _context.Games
-                .Include(g => g.Platforms)
-                .FirstOrDefaultAsync(g => g.Id == id);
+            if (selectedPlatforms == null)
+            {
+                selectedPlatforms = Array.Empty<int>();
+            }
 
-            if (gameFromDb == null)
+            var game = await _context.Games.Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
+            if (game == null)
             {
                 return NotFound();
             }
 
-            gameFromDb.Title = Title;
-            gameFromDb.Description = Description;
-            gameFromDb.Price = Price;
-            gameFromDb.Stock = Stock;
-            gameFromDb.GenreId = GenreId;
-            gameFromDb.PublisherId = PublisherId;
-            gameFromDb.CoverImageUrl = CoverImageUrl;
-            gameFromDb.ReleaseDate = ReleaseDate;
-            gameFromDb.Rating = Rating;
-            gameFromDb.AgeRating = AgeRating;
-            gameFromDb.IsActive = IsActive;
-
-            gameFromDb.Platforms.Clear();
-
-            if (selectedPlatforms != null)
+            if (!ModelState.IsValid)
             {
-                foreach (var platformId in selectedPlatforms)
-                {
-                    var platform = await _context.Platforms.FindAsync(platformId);
-                    if (platform != null)
-                    {
-                        gameFromDb.Platforms.Add(platform);
-                    }
-                }
+                FillMeta(model.GenreId, model.PublisherId, selectedPlatforms);
+                return View(model);
             }
+
+            game.Title = model.Title;
+            game.Description = model.Description;
+            game.Price = model.Price;
+            game.Stock = model.Stock;
+            game.GenreId = model.GenreId;
+            game.PublisherId = model.PublisherId;
+            game.CoverImageUrl = model.CoverImageUrl;
+            game.ReleaseDate = model.ReleaseDate;
+            game.Rating = model.Rating;
+            game.AgeRating = model.AgeRating;
+            game.IsActive = model.IsActive;
+            game.Platforms = await _context.Platforms.Where(p => selectedPlatforms.Contains(p.Id)).ToListAsync();
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
 
+            TempData["Success"] = "Игра обновлена.";
+            return RedirectToAction("Index");
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
             var game = await _context.Games
                 .Include(g => g.Genre)
                 .Include(g => g.Publisher)
@@ -294,7 +321,10 @@ namespace VideoGamesStore.Controllers
 
             return View(game);
         }
-        [HttpPost, ActionName("Delete")]
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -309,7 +339,21 @@ namespace VideoGamesStore.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index");
+        }
+
+        private void FillMeta(int? genreId, int? publisherId, IEnumerable<int> selectedPlatforms)
+        {
+            ViewBag.Genres = new SelectList(_context.Genres.OrderBy(g => g.Name), "Id", "Name", genreId);
+            ViewBag.Publishers = new SelectList(_context.Publishers.OrderBy(p => p.Name), "Id", "Name", publisherId);
+            ViewBag.Platforms = new MultiSelectList(_context.Platforms.OrderBy(p => p.Name), "Id", "Name", selectedPlatforms);
+        }
+
+        private int GetCurrentUserId()
+        {
+            var claimValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            int userId;
+            return int.TryParse(claimValue, out userId) ? userId : 0;
         }
     }
-    }
+}
