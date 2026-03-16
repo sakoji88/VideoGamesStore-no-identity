@@ -5,8 +5,21 @@
     <form method="post">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="mb-3"><label asp-for="Login" class="form-label"></label><input asp-for="Login" class="form-control" placeholder="Логин или email" /><span asp-validation-for="Login" class="text-danger"></span></div>
-        <div class="mb-3"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" /><span asp-validation-for="Password" class="text-danger"></span></div>
+
+        <div class="mb-3">
+            <label asp-for="Login" class="form-label"></label>
+            <input asp-for="Login" class="form-control" placeholder="player_one или player@mail.com" />
+            <div class="form-text">Пример: <code>player_one</code> или <code>player@mail.com</code></div>
+            <span asp-validation-for="Login" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" class="form-control" />
+            <div class="form-text">Пример: <code>Game123!</code></div>
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
         <button class="btn btn-primary w-100" type="submit">Войти</button>
     </form>
 </div>

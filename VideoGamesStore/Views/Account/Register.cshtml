@@ -5,10 +5,35 @@
     <form method="post">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="mb-3"><label asp-for="Username" class="form-label"></label><input asp-for="Username" class="form-control" placeholder="nickname" /><span asp-validation-for="Username" class="text-danger"></span></div>
-        <div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" placeholder="name@example.com" /><span asp-validation-for="Email" class="text-danger"></span></div>
-        <div class="mb-3"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" /><span asp-validation-for="Password" class="text-danger"></span></div>
-        <div class="mb-3"><label asp-for="ConfirmPassword" class="form-label"></label><input asp-for="ConfirmPassword" class="form-control" /><span asp-validation-for="ConfirmPassword" class="text-danger"></span></div>
+
+        <div class="mb-3">
+            <label asp-for="Username" class="form-label"></label>
+            <input asp-for="Username" class="form-control" placeholder="player_one" />
+            <div class="form-text">Пример: <code>player_one</code> (3–50 символов, буквы/цифры и _.-)</div>
+            <span asp-validation-for="Username" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+            <div class="form-text">Пример: <code>alex.gamer@mail.com</code></div>
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" class="form-control" />
+            <div class="form-text">Пример: минимум 6 символов, например <code>Game123!</code></div>
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ConfirmPassword" class="form-label"></label>
+            <input asp-for="ConfirmPassword" class="form-control" />
+            <div class="form-text">Должен совпадать с полем «Пароль»</div>
+            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+        </div>
+
         <button class="btn btn-success w-100" type="submit">Зарегистрироваться</button>
     </form>
 </div>

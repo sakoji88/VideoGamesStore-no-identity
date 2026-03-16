@@ -4,15 +4,66 @@
 <form asp-action="Create" method="post">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /><span asp-validation-for="Title" class="text-danger"></span></div>
-    <div class="mb-3"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="4"></textarea><span asp-validation-for="Description" class="text-danger"></span></div>
-    <div class="row"><div class="col-md-4 mb-3"><label asp-for="Price" class="form-label"></label><input asp-for="Price" class="form-control" type="number" min="0.01" step="0.01" /><span asp-validation-for="Price" class="text-danger"></span></div><div class="col-md-4 mb-3"><label asp-for="Stock" class="form-label"></label><input asp-for="Stock" class="form-control" type="number" min="0" /><span asp-validation-for="Stock" class="text-danger"></span></div><div class="col-md-4 mb-3"><label asp-for="Rating" class="form-label"></label><input asp-for="Rating" class="form-control" type="number" min="0" max="10" step="0.1" /></div></div>
+
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" placeholder="The Witcher 3" />
+        <div class="form-text">Пример: <code>Grand Theft Auto V</code></div>
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="4" placeholder="Краткое описание игры"></textarea>
+        <div class="form-text">Пример: <code>Экшен с открытым миром и онлайн-режимом.</code></div>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="Price" class="form-label"></label>
+            <input asp-for="Price" class="form-control" type="number" min="0.01" step="0.01" placeholder="1499.00" />
+            <div class="form-text">Пример: <code>1499,00</code></div>
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Stock" class="form-label"></label>
+            <input asp-for="Stock" class="form-control" type="number" min="0" placeholder="25" />
+            <div class="form-text">Пример: <code>25</code></div>
+            <span asp-validation-for="Stock" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Rating" class="form-label"></label>
+            <input asp-for="Rating" class="form-control" type="number" min="0" max="10" step="0.1" placeholder="9.2" />
+            <div class="form-text">Пример: <code>9,2</code> (от 0 до 10)</div>
+            <span asp-validation-for="Rating" class="text-danger"></span>
+        </div>
+    </div>
+
     <div class="mb-3"><label class="form-label">Жанр</label><select asp-for="GenreId" asp-items="ViewBag.Genres" class="form-select"></select></div>
     <div class="mb-3"><label class="form-label">Издатель</label><select asp-for="PublisherId" asp-items="ViewBag.Publishers" class="form-select"><option value="">Не указан</option></select></div>
     <div class="mb-3"><label class="form-label">Платформы</label><select name="selectedPlatforms" asp-items="ViewBag.Platforms" multiple class="form-select"></select></div>
-    <div class="mb-3"><label asp-for="CoverImageUrl" class="form-label"></label><input asp-for="CoverImageUrl" class="form-control" /></div>
-    <div class="mb-3"><label asp-for="ReleaseDate" class="form-label"></label><input asp-for="ReleaseDate" type="date" class="form-control" /></div>
-    <div class="mb-3"><label asp-for="AgeRating" class="form-label"></label><input asp-for="AgeRating" class="form-control" /></div>
+
+    <div class="mb-3">
+        <label asp-for="CoverImageUrl" class="form-label"></label>
+        <input asp-for="CoverImageUrl" class="form-control" placeholder="/images/games/gta5.jpg" />
+        <div class="form-text">Пример: <code>/images/games/gta5.jpg</code> или <code>https://site.com/image.jpg</code></div>
+        <span asp-validation-for="CoverImageUrl" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ReleaseDate" class="form-label"></label>
+        <input asp-for="ReleaseDate" type="date" class="form-control" />
+        <div class="form-text">Пример: <code>2015-04-14</code></div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="AgeRating" class="form-label"></label>
+        <input asp-for="AgeRating" class="form-control" placeholder="18+" />
+        <div class="form-text">Пример: <code>12+</code>, <code>16+</code>, <code>18+</code></div>
+        <span asp-validation-for="AgeRating" class="text-danger"></span>
+    </div>
+
     <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
     <button type="submit" class="btn btn-primary">Создать</button>
 </form>

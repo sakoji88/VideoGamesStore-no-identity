@@ -11,3 +11,6 @@ body { background: linear-gradient(180deg,#0d111d,#141a2a); color: #eaf0ff; min-
 .page-link { background:#171f35; color:#eaf0ff; border-color:#2d3555; }
 .page-item.active .page-link { background:#4860a8; border-color:#4860a8; }
 @media (max-width: 768px){ .card.game-card img{ height:220px; } }
+
+.form-text { color: #9fb0df; }
+.form-text code { color: #cfe1ff; background: #0f1528; padding: .1rem .3rem; border-radius: 4px; }

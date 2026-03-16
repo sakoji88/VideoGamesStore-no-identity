@@ -5,15 +5,66 @@
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /><span asp-validation-for="Title" class="text-danger"></span></div>
-    <div class="mb-3"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="4"></textarea></div>
-    <div class="row"><div class="col-md-4 mb-3"><label asp-for="Price" class="form-label"></label><input asp-for="Price" type="number" step="0.01" class="form-control" /></div><div class="col-md-4 mb-3"><label asp-for="Stock" class="form-label"></label><input asp-for="Stock" type="number" min="0" class="form-control" /></div><div class="col-md-4 mb-3"><label asp-for="Rating" class="form-label"></label><input asp-for="Rating" type="number" min="0" max="10" step="0.1" class="form-control" /></div></div>
+
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <div class="form-text">Пример: <code>Cyberpunk 2077</code></div>
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        <div class="form-text">Пример: <code>RPG в футуристическом открытом мире.</code></div>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="Price" class="form-label"></label>
+            <input asp-for="Price" type="number" step="0.01" class="form-control" />
+            <div class="form-text">Пример: <code>1999,00</code></div>
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Stock" class="form-label"></label>
+            <input asp-for="Stock" type="number" min="0" class="form-control" />
+            <div class="form-text">Пример: <code>40</code></div>
+            <span asp-validation-for="Stock" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Rating" class="form-label"></label>
+            <input asp-for="Rating" type="number" min="0" max="10" step="0.1" class="form-control" />
+            <div class="form-text">Пример: <code>8,7</code> (0–10)</div>
+            <span asp-validation-for="Rating" class="text-danger"></span>
+        </div>
+    </div>
+
     <div class="mb-3"><label class="form-label">Жанр</label><select asp-for="GenreId" asp-items="ViewBag.Genres" class="form-select"></select></div>
     <div class="mb-3"><label class="form-label">Издатель</label><select asp-for="PublisherId" asp-items="ViewBag.Publishers" class="form-select"><option value="">Не указан</option></select></div>
     <div class="mb-3"><label class="form-label">Платформы</label><select name="selectedPlatforms" asp-items="ViewBag.Platforms" multiple class="form-select"></select></div>
-    <div class="mb-3"><label asp-for="CoverImageUrl" class="form-label"></label><input asp-for="CoverImageUrl" class="form-control" /></div>
-    <div class="mb-3"><label asp-for="ReleaseDate" class="form-label"></label><input asp-for="ReleaseDate" type="date" class="form-control" /></div>
-    <div class="mb-3"><label asp-for="AgeRating" class="form-label"></label><input asp-for="AgeRating" class="form-control" /></div>
+
+    <div class="mb-3">
+        <label asp-for="CoverImageUrl" class="form-label"></label>
+        <input asp-for="CoverImageUrl" class="form-control" />
+        <div class="form-text">Пример: <code>/images/games/witcher3.jpg</code></div>
+        <span asp-validation-for="CoverImageUrl" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ReleaseDate" class="form-label"></label>
+        <input asp-for="ReleaseDate" type="date" class="form-control" />
+        <div class="form-text">Пример: <code>2020-12-10</code></div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="AgeRating" class="form-label"></label>
+        <input asp-for="AgeRating" class="form-control" />
+        <div class="form-text">Пример: <code>16+</code></div>
+        <span asp-validation-for="AgeRating" class="text-danger"></span>
+    </div>
+
     <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
     <button type="submit" class="btn btn-primary">Сохранить</button>
 </form>
