@@ -31,6 +31,6 @@ public class GameDetailsViewModel
     public bool CanLeaveReview { get; set; }
     public bool HasPurchasedGame { get; set; }
     public bool HasReview { get; set; }
-    public List<ReviewViewModel> Reviews { get; set; } = [];
+    public List<ReviewViewModel> Reviews { get; set; } = new List<ReviewViewModel>();
     public AddReviewViewModel NewReview { get; set; } = new();
 }

@@ -16,6 +16,6 @@ public class CartItemViewModel
 public class CartViewModel
 {
     public int OrderId { get; set; }
-    public List<CartItemViewModel> Items { get; set; } = [];
+    public List<CartItemViewModel> Items { get; set; } = new List<CartItemViewModel>();
     public decimal GrandTotal => Items.Sum(x => x.Total);
 }

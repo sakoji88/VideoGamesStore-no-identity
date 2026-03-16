@@ -165,7 +165,7 @@ public class GamesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Game game, int[] selectedPlatforms)
     {
-        selectedPlatforms ??= [];
+        selectedPlatforms ??= Array.Empty<int>();
 
         if (!ModelState.IsValid)
         {
@@ -194,7 +194,7 @@ public class GamesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Game model, int[] selectedPlatforms)
     {
-        selectedPlatforms ??= [];
+        selectedPlatforms ??= Array.Empty<int>();
 
         var game = await _context.Games.Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
         if (game is null) return NotFound();

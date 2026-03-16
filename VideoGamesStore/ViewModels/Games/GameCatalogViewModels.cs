@@ -5,7 +5,7 @@ namespace VideoGamesStore.ViewModels.Games;
 
 public class GamesIndexViewModel
 {
-    public IEnumerable<Game> Items { get; set; } = [];
+    public IEnumerable<Game> Items { get; set; } = new List<Game>();
     public SelectList Genres { get; set; } = null!;
     public SelectList Platforms { get; set; } = null!;
     public string? SearchString { get; set; }

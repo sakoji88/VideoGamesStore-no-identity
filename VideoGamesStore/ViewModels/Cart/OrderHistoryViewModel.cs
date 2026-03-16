@@ -14,5 +14,5 @@ public class OrderHistoryViewModel
     public DateTime OrderDate { get; set; }
     public string Status { get; set; } = string.Empty;
     public decimal TotalAmount { get; set; }
-    public List<OrderHistoryItemViewModel> Items { get; set; } = [];
+    public List<OrderHistoryItemViewModel> Items { get; set; } = new List<OrderHistoryItemViewModel>();
 }
