@@ -322,7 +322,7 @@ public class GamesController : Controller
 
     private int GetCurrentUserId()
     {
-        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return int.TryParse(claim, out var userId) ? userId : 0;
+        var claimValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return int.TryParse(claimValue, out var userId) ? userId : 0;
     }
 }
