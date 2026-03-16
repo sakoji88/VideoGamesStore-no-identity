@@ -165,11 +165,14 @@ public class GamesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Game game, int[] selectedPlatforms)
     {
+        selectedPlatforms ??= [];
+
         if (!ModelState.IsValid)
         {
             FillMeta(game.GenreId, game.PublisherId, selectedPlatforms);
             return View(game);
         }
+
         game.Platforms = await _context.Platforms.Where(p => selectedPlatforms.Contains(p.Id)).ToListAsync();
         game.CreatedAt = DateTime.UtcNow;
         _context.Games.Add(game);
@@ -191,6 +194,8 @@ public class GamesController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Game model, int[] selectedPlatforms)
     {
+        selectedPlatforms ??= [];
+
         var game = await _context.Games.Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
         if (game is null) return NotFound();
         if (!ModelState.IsValid)
