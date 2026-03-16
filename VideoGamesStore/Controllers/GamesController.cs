@@ -106,6 +106,8 @@ public class GamesController : Controller
             TempData["Error"] = "Вы уже оставили отзыв на эту игру.";
             return RedirectToAction(nameof(Details), new { id = model.GameId });
         }
+        return RedirectToAction(nameof(Create));
+    }
 
         if (!ModelState.IsValid)
         {
