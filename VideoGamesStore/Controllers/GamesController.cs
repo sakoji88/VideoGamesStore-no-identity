@@ -12,15 +12,39 @@ public class GamesController : Controller
 {
     private readonly VideoGamesStoreContext _context;
     private const int PageSize = 9;
-    public GamesController(VideoGamesStoreContext context) => _context = context;
+
+    public GamesController(VideoGamesStoreContext context)
+    {
+        _context = context;
+    }
 
     public async Task<IActionResult> Index(string? searchString, int? genreId, int? platformId, string? sortOrder, int page = 1)
     {
-        var gamesQuery = _context.Games.Include(g => g.Genre).Include(g => g.Publisher).Include(g => g.Platforms).AsQueryable();
-        if (!User.IsInRole("Admin")) gamesQuery = gamesQuery.Where(g => g.IsActive);
-        if (!string.IsNullOrWhiteSpace(searchString)) gamesQuery = gamesQuery.Where(g => g.Title.Contains(searchString));
-        if (genreId.HasValue) gamesQuery = gamesQuery.Where(g => g.GenreId == genreId.Value);
-        if (platformId.HasValue) gamesQuery = gamesQuery.Where(g => g.Platforms.Any(p => p.Id == platformId.Value));
+        var gamesQuery = _context.Games
+            .Include(g => g.Genre)
+            .Include(g => g.Publisher)
+            .Include(g => g.Platforms)
+            .AsQueryable();
+
+        if (!User.IsInRole("Admin"))
+        {
+            gamesQuery = gamesQuery.Where(g => g.IsActive);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            gamesQuery = gamesQuery.Where(g => g.Title.Contains(searchString));
+        }
+
+        if (genreId.HasValue)
+        {
+            gamesQuery = gamesQuery.Where(g => g.GenreId == genreId.Value);
+        }
+
+        if (platformId.HasValue)
+        {
+            gamesQuery = gamesQuery.Where(g => g.Platforms.Any(p => p.Id == platformId.Value));
+        }
 
         gamesQuery = sortOrder switch
         {
@@ -30,27 +54,42 @@ public class GamesController : Controller
             _ => gamesQuery.OrderBy(g => g.Title)
         };
 
+        var safePage = Math.Max(page, 1);
         var total = await gamesQuery.CountAsync();
+
         var vm = new GamesIndexViewModel
         {
-            Items = await gamesQuery.Skip((Math.Max(page, 1) - 1) * PageSize).Take(PageSize).ToListAsync(),
+            Items = await gamesQuery.Skip((safePage - 1) * PageSize).Take(PageSize).ToListAsync(),
             Genres = new SelectList(await _context.Genres.OrderBy(g => g.Name).ToListAsync(), "Id", "Name", genreId),
             Platforms = new SelectList(await _context.Platforms.OrderBy(p => p.Name).ToListAsync(), "Id", "Name", platformId),
             SearchString = searchString,
             GenreId = genreId,
             PlatformId = platformId,
             SortOrder = sortOrder,
-            Page = Math.Max(page, 1),
+            Page = safePage,
             TotalPages = (int)Math.Ceiling(total / (double)PageSize)
         };
+
         return View(vm);
     }
 
     public async Task<IActionResult> Details(int? id)
     {
-        if (id is null) return NotFound();
-        var game = await _context.Games.Include(g => g.Genre).Include(g => g.Publisher).Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
-        if (game is null || (!game.IsActive && !User.IsInRole("Admin"))) return NotFound();
+        if (id is null)
+        {
+            return NotFound();
+        }
+
+        var game = await _context.Games
+            .Include(g => g.Genre)
+            .Include(g => g.Publisher)
+            .Include(g => g.Platforms)
+            .FirstOrDefaultAsync(g => g.Id == id.Value);
+
+        if (game is null || (!game.IsActive && !User.IsInRole("Admin")))
+        {
+            return NotFound();
+        }
 
         var visibleReviews = await _context.Reviews
             .Where(r => r.GameId == game.Id && (r.IsVisible || User.IsInRole("Admin")))
@@ -85,11 +124,15 @@ public class GamesController : Controller
     }
 
     [Authorize]
-    [HttpPost, ValidateAntiForgeryToken]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddReview(AddReviewViewModel model)
     {
         var game = await _context.Games.FirstOrDefaultAsync(g => g.Id == model.GameId);
-        if (game is null || (!game.IsActive && !User.IsInRole("Admin"))) return NotFound();
+        if (game is null || (!game.IsActive && !User.IsInRole("Admin")))
+        {
+            return NotFound();
+        }
 
         var userId = GetCurrentUserId();
         var hasPurchased = await _context.OrderItems.AnyAsync(i =>
@@ -100,14 +143,15 @@ public class GamesController : Controller
             TempData["Error"] = "Оставлять отзывы могут только пользователи, купившие игру.";
             return RedirectToAction(nameof(Details), new { id = model.GameId });
         }
+        return RedirectToAction(nameof(Create));
+    }
 
-        if (await _context.Reviews.AnyAsync(r => r.GameId == model.GameId && r.UserId == userId))
+        var alreadyReviewed = await _context.Reviews.AnyAsync(r => r.GameId == model.GameId && r.UserId == userId);
+        if (alreadyReviewed)
         {
             TempData["Error"] = "Вы уже оставили отзыв на эту игру.";
             return RedirectToAction(nameof(Details), new { id = model.GameId });
         }
-        return RedirectToAction(nameof(Create));
-    }
 
         if (!ModelState.IsValid)
         {
@@ -124,6 +168,7 @@ public class GamesController : Controller
             CreatedAt = DateTime.UtcNow,
             IsVisible = false
         });
+
         await _context.SaveChangesAsync();
 
         TempData["Success"] = "Отзыв отправлен на модерацию и появится после подтверждения администратором.";
@@ -138,7 +183,8 @@ public class GamesController : Controller
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpPost, ValidateAntiForgeryToken]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddGenre(string genreName)
     {
         if (!string.IsNullOrWhiteSpace(genreName) && !await _context.Genres.AnyAsync(g => g.Name == genreName))
@@ -146,11 +192,13 @@ public class GamesController : Controller
             _context.Genres.Add(new Genre { Name = genreName.Trim() });
             await _context.SaveChangesAsync();
         }
+
         return RedirectToAction(nameof(Create));
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpPost, ValidateAntiForgeryToken]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddPublisher(string publisherName)
     {
         if (!string.IsNullOrWhiteSpace(publisherName) && !await _context.Publishers.AnyAsync(p => p.Name == publisherName))
@@ -158,12 +206,14 @@ public class GamesController : Controller
             _context.Publishers.Add(new Publisher { Name = publisherName.Trim() });
             await _context.SaveChangesAsync();
         }
+
         return RedirectToAction(nameof(Create));
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Game game, int[] selectedPlatforms)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(Game game, int[]? selectedPlatforms)
     {
         selectedPlatforms ??= Array.Empty<int>();
 
@@ -175,8 +225,10 @@ public class GamesController : Controller
 
         game.Platforms = await _context.Platforms.Where(p => selectedPlatforms.Contains(p.Id)).ToListAsync();
         game.CreatedAt = DateTime.UtcNow;
+
         _context.Games.Add(game);
         await _context.SaveChangesAsync();
+
         TempData["Success"] = "Игра добавлена.";
         return RedirectToAction(nameof(Index));
     }
@@ -185,19 +237,28 @@ public class GamesController : Controller
     public async Task<IActionResult> Edit(int id)
     {
         var game = await _context.Games.Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
-        if (game is null) return NotFound();
+        if (game is null)
+        {
+            return NotFound();
+        }
+
         FillMeta(game.GenreId, game.PublisherId, game.Platforms.Select(p => p.Id));
         return View(game);
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Game model, int[] selectedPlatforms)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, Game model, int[]? selectedPlatforms)
     {
         selectedPlatforms ??= Array.Empty<int>();
 
         var game = await _context.Games.Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
-        if (game is null) return NotFound();
+        if (game is null)
+        {
+            return NotFound();
+        }
+
         if (!ModelState.IsValid)
         {
             FillMeta(model.GenreId, model.PublisherId, selectedPlatforms);
@@ -216,6 +277,7 @@ public class GamesController : Controller
         game.AgeRating = model.AgeRating;
         game.IsActive = model.IsActive;
         game.Platforms = await _context.Platforms.Where(p => selectedPlatforms.Contains(p.Id)).ToListAsync();
+
         await _context.SaveChangesAsync();
 
         TempData["Success"] = "Игра обновлена.";
@@ -226,11 +288,18 @@ public class GamesController : Controller
     public async Task<IActionResult> Delete(int id)
     {
         var game = await _context.Games.Include(g => g.Genre).FirstOrDefaultAsync(g => g.Id == id);
-        return game is null ? NotFound() : View(game);
+        if (game is null)
+        {
+            return NotFound();
+        }
+
+        return View(game);
     }
 
     [Authorize(Roles = "Admin")]
-    [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+    [HttpPost]
+    [ActionName("Delete")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var game = await _context.Games.Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
@@ -240,6 +309,7 @@ public class GamesController : Controller
             _context.Games.Remove(game);
             await _context.SaveChangesAsync();
         }
+
         return RedirectToAction(nameof(Index));
     }
 
