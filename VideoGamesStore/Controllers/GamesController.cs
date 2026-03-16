@@ -143,6 +143,8 @@ public class GamesController : Controller
             TempData["Error"] = "Оставлять отзывы могут только пользователи, купившие игру.";
             return RedirectToAction(nameof(Details), new { id = model.GameId });
         }
+        return RedirectToAction(nameof(Create));
+    }
 
         var alreadyReviewed = await _context.Reviews.AnyAsync(r => r.GameId == model.GameId && r.UserId == userId);
         if (alreadyReviewed)
