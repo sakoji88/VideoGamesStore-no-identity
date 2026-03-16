@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -50,7 +51,83 @@ public class GamesController : Controller
         if (id is null) return NotFound();
         var game = await _context.Games.Include(g => g.Genre).Include(g => g.Publisher).Include(g => g.Platforms).FirstOrDefaultAsync(g => g.Id == id);
         if (game is null || (!game.IsActive && !User.IsInRole("Admin"))) return NotFound();
-        return View(game);
+
+        var visibleReviews = await _context.Reviews
+            .Where(r => r.GameId == game.Id && (r.IsVisible || User.IsInRole("Admin")))
+            .Include(r => r.User)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        var vm = new GameDetailsViewModel
+        {
+            Game = game,
+            Reviews = visibleReviews.Select(r => new ReviewViewModel
+            {
+                Id = r.Id,
+                Username = r.User.Username,
+                Rating = r.Rating,
+                Comment = r.Comment,
+                CreatedAt = r.CreatedAt
+            }).ToList(),
+            NewReview = new AddReviewViewModel { GameId = game.Id }
+        };
+
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var userId = GetCurrentUserId();
+            vm.HasPurchasedGame = await _context.OrderItems.AnyAsync(i =>
+                i.GameId == game.Id && i.Order.UserId == userId && i.Order.Status == "Оформлен");
+            vm.HasReview = await _context.Reviews.AnyAsync(r => r.GameId == game.Id && r.UserId == userId);
+            vm.CanLeaveReview = vm.HasPurchasedGame && !vm.HasReview;
+        }
+
+        return View(vm);
+    }
+
+    [Authorize]
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddReview(AddReviewViewModel model)
+    {
+        var game = await _context.Games.FirstOrDefaultAsync(g => g.Id == model.GameId);
+        if (game is null || (!game.IsActive && !User.IsInRole("Admin"))) return NotFound();
+
+        var userId = GetCurrentUserId();
+        var hasPurchased = await _context.OrderItems.AnyAsync(i =>
+            i.GameId == model.GameId && i.Order.UserId == userId && i.Order.Status == "Оформлен");
+
+        if (!hasPurchased)
+        {
+            TempData["Error"] = "Оставлять отзывы могут только пользователи, купившие игру.";
+            return RedirectToAction(nameof(Details), new { id = model.GameId });
+        }
+
+        if (await _context.Reviews.AnyAsync(r => r.GameId == model.GameId && r.UserId == userId))
+        {
+            TempData["Error"] = "Вы уже оставили отзыв на эту игру.";
+            return RedirectToAction(nameof(Details), new { id = model.GameId });
+        }
+        return RedirectToAction(nameof(Create));
+    }
+
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Проверьте корректность оценки и текста отзыва.";
+            return RedirectToAction(nameof(Details), new { id = model.GameId });
+        }
+
+        _context.Reviews.Add(new Review
+        {
+            GameId = model.GameId,
+            UserId = userId,
+            Rating = model.Rating,
+            Comment = string.IsNullOrWhiteSpace(model.Comment) ? null : model.Comment.Trim(),
+            CreatedAt = DateTime.UtcNow,
+            IsVisible = false
+        });
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Отзыв отправлен на модерацию и появится после подтверждения администратором.";
+        return RedirectToAction(nameof(Details), new { id = model.GameId });
     }
 
     [Authorize(Roles = "Admin")]
@@ -166,5 +243,11 @@ public class GamesController : Controller
         ViewBag.Genres = new SelectList(_context.Genres.OrderBy(g => g.Name), "Id", "Name", genreId);
         ViewBag.Publishers = new SelectList(_context.Publishers.OrderBy(p => p.Name), "Id", "Name", publisherId);
         ViewBag.Platforms = new MultiSelectList(_context.Platforms.OrderBy(p => p.Name), "Id", "Name", selectedPlatforms);
+    }
+
+    private int GetCurrentUserId()
+    {
+        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(claim, out var userId) ? userId : 0;
     }
 }

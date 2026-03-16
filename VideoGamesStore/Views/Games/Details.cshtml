@@ -1,8 +1,8 @@
-@model VideoGamesStore.Models.Game
+@model VideoGamesStore.ViewModels.Games.GameDetailsViewModel
 @{
-    ViewData["Title"] = Model.Title;
+    ViewData["Title"] = Model.Game.Title;
 
-    var rawCover = Model.CoverImageUrl?.Trim();
+    var rawCover = Model.Game.CoverImageUrl?.Trim();
     var normalizedCover = rawCover?.Replace("\\", "/");
 
     var imageUrl = string.IsNullOrWhiteSpace(normalizedCover)
@@ -17,23 +17,89 @@
                     ? $"/{normalizedCover}"
                     : $"/images/games/{normalizedCover.TrimStart('/')}";
 }
-<div class="row g-4">
+<div class="row g-4 mb-4">
     <div class="col-md-5">
-        <img class="img-fluid rounded shadow" src="@imageUrl" alt="@Model.Title" />
+        <img class="img-fluid rounded shadow" src="@imageUrl" alt="@Model.Game.Title" />
     </div>
     <div class="col-md-7">
-        <h1>@Model.Title</h1>
-        <p class="text-secondary">@Model.Genre?.Name · @(Model.Publisher?.Name ?? "Неизвестно")</p>
-        <p>@Model.Description</p>
-        <p><strong>Платформы:</strong> @string.Join(", ", Model.Platforms.Select(x => x.Name))</p>
-        <p><strong>Рейтинг:</strong> @(Model.Rating?.ToString("0.0") ?? "Нет")</p>
-        <p class="fs-3 fw-bold">@Model.Price.ToString("0.00") ₽</p>
+        <h1>@Model.Game.Title</h1>
+        <p class="text-secondary">@Model.Game.Genre?.Name · @(Model.Game.Publisher?.Name ?? "Неизвестно")</p>
+        <p>@Model.Game.Description</p>
+        <p><strong>Платформы:</strong> @string.Join(", ", Model.Game.Platforms.Select(x => x.Name))</p>
+        <p><strong>Рейтинг:</strong> @(Model.Game.Rating?.ToString("0.0") ?? "Нет")</p>
+        <p class="fs-3 fw-bold">@Model.Game.Price.ToString("0.00") ₽</p>
         @if (User.Identity?.IsAuthenticated == true)
         {
             <div class="d-flex gap-2">
-                <form asp-controller="Cart" asp-action="Add" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@Model.Id" /><button class="btn btn-outline-success">Добавить в корзину</button></form>
-                <form asp-controller="Cart" asp-action="BuyNow" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@Model.Id" /><button class="btn btn-success">Купить</button></form>
+                <form asp-controller="Cart" asp-action="Add" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@Model.Game.Id" /><button class="btn btn-outline-success">Добавить в корзину</button></form>
+                <form asp-controller="Cart" asp-action="BuyNow" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@Model.Game.Id" /><button class="btn btn-success">Купить</button></form>
             </div>
         }
     </div>
 </div>
+
+<section class="reviews-section">
+    <h3 class="mb-3">Отзывы покупателей</h3>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        if (Model.CanLeaveReview)
+        {
+            <div class="card game-card p-3 mb-4">
+                <h5>Оставить отзыв</h5>
+                <form asp-action="AddReview" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="NewReview.GameId" />
+                    <div class="mb-3">
+                        <label asp-for="NewReview.Rating" class="form-label"></label>
+                        <select asp-for="NewReview.Rating" class="form-select">
+                            <option value="">Выберите оценку</option>
+                            <option value="5">5 — отлично</option>
+                            <option value="4">4 — хорошо</option>
+                            <option value="3">3 — нормально</option>
+                            <option value="2">2 — слабо</option>
+                            <option value="1">1 — плохо</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="NewReview.Comment" class="form-label"></label>
+                        <textarea asp-for="NewReview.Comment" class="form-control" rows="3" placeholder="Что понравилось или не понравилось?"></textarea>
+                    </div>
+                    <button class="btn btn-primary">Отправить на модерацию</button>
+                </form>
+            </div>
+        }
+        else if (!Model.HasPurchasedGame)
+        {
+            <div class="alert alert-info">Оставлять отзывы могут только пользователи, которые купили эту игру.</div>
+        }
+        else if (Model.HasReview)
+        {
+            <div class="alert alert-secondary">Вы уже оставили отзыв на эту игру.</div>
+        }
+    }
+
+    @if (!Model.Reviews.Any())
+    {
+        <div class="alert alert-secondary">Пока нет опубликованных отзывов.</div>
+    }
+    else
+    {
+        <div class="d-grid gap-3">
+            @foreach (var review in Model.Reviews)
+            {
+                <article class="card game-card p-3">
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <strong>@review.Username</strong>
+                        <span class="badge text-bg-warning">@review.Rating / 5</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(review.Comment))
+                    {
+                        <p class="mt-2 mb-1">@review.Comment</p>
+                    }
+                    <small class="text-secondary">@review.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                </article>
+            }
+        </div>
+    }
+</section>

@@ -19,10 +19,13 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="Cart" asp-action="Index">Корзина</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Cart" asp-action="Orders">Мои заказы</a></li>
                     }
                     @if (User.IsInRole("Admin"))
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Users">Админка</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Users">Пользователи</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Orders">Заказы</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Reviews">Отзывы</a></li>
                     }
                 </ul>
                 <ul class="navbar-nav">

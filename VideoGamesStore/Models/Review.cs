@@ -20,6 +20,8 @@ public partial class Review
     [StringLength(1000)]
     public string? Comment { get; set; }
 
+    public bool IsVisible { get; set; }
+
     [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }
 

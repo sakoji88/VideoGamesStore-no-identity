@@ -9,6 +9,12 @@ public static class DbInitializer
     {
         await context.Database.EnsureCreatedAsync();
 
+        await context.Database.ExecuteSqlRawAsync(@"
+IF COL_LENGTH('Reviews', 'IsVisible') IS NULL
+BEGIN
+    ALTER TABLE Reviews ADD IsVisible bit NOT NULL CONSTRAINT DF_Reviews_IsVisible DEFAULT(1);
+END");
+
         var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
         if (userRole is null)
         {

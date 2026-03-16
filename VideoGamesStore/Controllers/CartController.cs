@@ -32,6 +32,33 @@ public class CartController : Controller
         return View(vm);
     }
 
+
+    public async Task<IActionResult> Orders()
+    {
+        var userId = GetCurrentUserId();
+        var orders = await _context.Orders
+            .Where(o => o.UserId == userId && o.Status == "Оформлен")
+            .Include(o => o.OrderItems)
+            .ThenInclude(i => i.Game)
+            .OrderByDescending(o => o.OrderDate)
+            .Select(o => new OrderHistoryViewModel
+            {
+                OrderId = o.Id,
+                OrderDate = o.OrderDate,
+                Status = o.Status,
+                TotalAmount = o.TotalAmount,
+                Items = o.OrderItems.Select(i => new OrderHistoryItemViewModel
+                {
+                    GameTitle = i.Game.Title,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            })
+            .ToListAsync();
+
+        return View(orders);
+    }
+
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(int gameId)
     {

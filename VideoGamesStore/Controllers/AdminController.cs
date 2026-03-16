@@ -35,6 +35,85 @@ public class AdminController : Controller
         return View(model);
     }
 
+    public async Task<IActionResult> Orders(string? search)
+    {
+        var query = _context.Orders
+            .Include(o => o.User)
+            .Include(o => o.OrderItems)
+            .ThenInclude(i => i.Game)
+            .Where(o => o.Status == "Оформлен")
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(o => o.User.Username.Contains(search) || o.User.Email.Contains(search));
+        }
+
+        var model = await query
+            .OrderByDescending(o => o.OrderDate)
+            .Select(o => new OrderAdminViewModel
+            {
+                Id = o.Id,
+                Username = o.User.Username,
+                Email = o.User.Email,
+                OrderDate = o.OrderDate,
+                Status = o.Status,
+                TotalAmount = o.TotalAmount,
+                Items = o.OrderItems.Select(i => new OrderItemAdminViewModel
+                {
+                    GameTitle = i.Game.Title,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            }).ToListAsync();
+
+        ViewBag.Search = search;
+        return View(model);
+    }
+
+    public async Task<IActionResult> Reviews(string? search)
+    {
+        var query = _context.Reviews
+            .Include(r => r.Game)
+            .Include(r => r.User)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(r => r.Game.Title.Contains(search) || r.User.Username.Contains(search));
+        }
+
+        var model = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new ReviewModerationViewModel
+            {
+                Id = r.Id,
+                GameId = r.GameId,
+                GameTitle = r.Game.Title,
+                Username = r.User.Username,
+                Rating = r.Rating,
+                Comment = r.Comment,
+                CreatedAt = r.CreatedAt,
+                IsVisible = r.IsVisible
+            })
+            .ToListAsync();
+
+        ViewBag.Search = search;
+        return View(model);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleReviewVisibility(int id)
+    {
+        var review = await _context.Reviews.FirstOrDefaultAsync(r => r.Id == id);
+        if (review is null) return NotFound();
+
+        review.IsVisible = !review.IsVisible;
+        await _context.SaveChangesAsync();
+        TempData["Success"] = review.IsVisible ? "Отзыв опубликован." : "Отзыв скрыт.";
+        return RedirectToAction(nameof(Reviews));
+    }
+
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleBan(int id)
     {
