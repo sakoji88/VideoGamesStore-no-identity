@@ -1,0 +1,40 @@
+@model IEnumerable<VideoGamesStore.ViewModels.Cart.OrderHistoryViewModel>
+@{
+    ViewData["Title"] = "Мои заказы";
+}
+
+<h2 class="mb-3">Мои заказы</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-secondary">У вас пока нет оформленных заказов.</div>
+}
+else
+{
+    <div class="d-grid gap-3">
+        @foreach (var order in Model)
+        {
+            <div class="card game-card p-3">
+                <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+                    <div>
+                        <h5 class="mb-0">Заказ #@order.OrderId</h5>
+                        <small class="text-secondary">@order.OrderDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge text-bg-success">@order.Status</span>
+                        <div class="fw-semibold mt-1">@order.TotalAmount.ToString("0.00") ₽</div>
+                    </div>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in order.Items)
+                    {
+                        <li class="list-group-item bg-transparent text-light d-flex justify-content-between">
+                            <span>@item.GameTitle × @item.Quantity</span>
+                            <span>@item.Total.ToString("0.00") ₽</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+}
