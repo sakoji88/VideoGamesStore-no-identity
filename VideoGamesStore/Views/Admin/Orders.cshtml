@@ -1,0 +1,48 @@
+@model IEnumerable<VideoGamesStore.ViewModels.Admin.OrderAdminViewModel>
+@{
+    ViewData["Title"] = "Заказы";
+}
+
+<h2 class="mb-3">Заказы</h2>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-5">
+        <input class="form-control" name="search" value="@ViewBag.Search" placeholder="Поиск по логину/email" />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-outline-light w-100">Найти</button>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-secondary">Оформленных заказов пока нет.</div>
+}
+else
+{
+    <div class="d-grid gap-3">
+        @foreach (var order in Model)
+        {
+            <div class="card game-card p-3">
+                <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+                    <div>
+                        <h5 class="mb-0">Заказ #@order.Id</h5>
+                        <small class="text-secondary">@order.OrderDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                    </div>
+                    <div class="text-end">
+                        <div>@order.Username (@order.Email)</div>
+                        <strong>@order.TotalAmount.ToString("0.00") ₽</strong>
+                    </div>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in order.Items)
+                    {
+                        <li class="list-group-item bg-transparent text-light d-flex justify-content-between">
+                            <span>@item.GameTitle × @item.Quantity</span>
+                            <span>@item.Total.ToString("0.00") ₽</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+}

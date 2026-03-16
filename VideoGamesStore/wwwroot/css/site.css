@@ -1,22 +1,16 @@
-html {
-  font-size: 14px;
-}
+html { font-size: 15px; }
+body { background: linear-gradient(180deg,#0d111d,#141a2a); color: #eaf0ff; min-height:100vh; }
+.app-nav { background: rgba(12,18,34,.95); border-bottom: 1px solid #29314f; }
+.hero { background: radial-gradient(circle at top right,#243460,#16203d); border:1px solid #324575; }
+.card.game-card { background:#171f35; border:1px solid #2b3557; color:#eef2ff; }
+.card.game-card img { height: 280px; object-fit: cover; }
+.auth-card { max-width: 480px; margin: 2rem auto; background: #171f35; padding: 1.5rem; border-radius: 14px; border:1px solid #2b3557; }
+.form-control,.form-select { background:#0f1528; color:#eaf0ff; border:1px solid #2c3657; }
+.form-control:focus,.form-select:focus { background:#0f1528; color:#eaf0ff; }
+.table { border-color:#2d3555; }
+.page-link { background:#171f35; color:#eaf0ff; border-color:#2d3555; }
+.page-item.active .page-link { background:#4860a8; border-color:#4860a8; }
+@media (max-width: 768px){ .card.game-card img{ height:220px; } }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
-}
+.form-text { color: #9fb0df; }
+.form-text code { color: #cfe1ff; background: #0f1528; padding: .1rem .3rem; border-radius: 4px; }

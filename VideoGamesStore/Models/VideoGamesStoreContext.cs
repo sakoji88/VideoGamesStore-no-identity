@@ -111,6 +111,7 @@ public partial class VideoGamesStoreContext : DbContext
             entity.HasKey(e => e.Id).HasName("PK__Reviews__3214EC0715EEC44A");
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.IsVisible).HasDefaultValue(true);
 
             entity.HasOne(d => d.Game).WithMany(p => p.Reviews)
                 .OnDelete(DeleteBehavior.ClientSetNull)
