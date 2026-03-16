@@ -1,131 +1,61 @@
-﻿@model IEnumerable<VideoGamesStore.Models.Game>
+@model VideoGamesStore.ViewModels.Games.GamesIndexViewModel
+@{ ViewData["Title"] = "Каталог игр"; }
 
-@{
-    ViewData["Title"] = "Каталог игр";
-}
+<section class="hero mb-4">
+    <h1>Каталог игр</h1>
+    <p>Выбирайте хиты для PC и консолей.</p>
+</section>
 
-<h1 class="mb-4">Каталог игр</h1>
-
-<form method="get" asp-action="Index" class="row g-3 mb-4">
-    <div class="col-md-4">
-        <label class="form-label">Поиск по названию</label>
-        <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Введите название игры" />
-    </div>
-    
-    <a asp-action="Create" class="btn btn-success mb-3">
-        Добавить игру
-    </a>
-
-    <div class="col-md-3">
-        <label class="form-label">Жанр</label>
-        <select name="genreId" class="form-select" asp-items="ViewBag.Genres">
-            <option value="">Все жанры</option>
-        </select>
-    </div>
-
-    <div class="col-md-3">
-        <label class="form-label">Платформа</label>
-        <select name="platformId" class="form-select" asp-items="ViewBag.Platforms">
-            <option value="">Все платформы</option>
-        </select>
-    </div>
-
-    <div class="col-md-2 d-flex align-items-end">
-        <button type="submit" class="btn btn-primary w-100">Применить</button>
-    </div>
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-4"><input type="text" name="searchString" value="@Model.SearchString" class="form-control" placeholder="Поиск по названию" /></div>
+    <div class="col-md-3"><select name="genreId" asp-items="Model.Genres" class="form-select"><option value="">Все жанры</option></select></div>
+    <div class="col-md-3"><select name="platformId" asp-items="Model.Platforms" class="form-select"><option value="">Все платформы</option></select></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100">Фильтр</button></div>
 </form>
 
-<div class="mb-3">
-    <a asp-action="Index"
-           asp-route-searchString="@ViewData["CurrentFilter"]"
-           asp-route-genreId="@ViewData["CurrentGenre"]"
-           asp-route-platformId="@ViewData["CurrentPlatform"]"
-           asp-route-sortOrder="@ViewData["TitleSort"]"
-           class="btn btn-outline-secondary me-2">
-        Сортировка по названию
-    </a>
-
-    <a asp-action="Index"
-           asp-route-searchString="@ViewData["CurrentFilter"]"
-           asp-route-genreId="@ViewData["CurrentGenre"]"
-           asp-route-platformId="@ViewData["CurrentPlatform"]"
-           asp-route-sortOrder="@ViewData["PriceSort"]"
-           class="btn btn-outline-secondary">
-        Сортировка по цене
-    </a>
+<div class="d-flex justify-content-between mb-3">
+    <div class="btn-group">
+        <a asp-action="Index" asp-route-sortOrder="@(Model.SortOrder == "title_desc" ? "" : "title_desc")" asp-route-searchString="@Model.SearchString" asp-route-genreId="@Model.GenreId" asp-route-platformId="@Model.PlatformId" class="btn btn-outline-light">Название</a>
+        <a asp-action="Index" asp-route-sortOrder="@(Model.SortOrder == "price_asc" ? "price_desc" : "price_asc")" asp-route-searchString="@Model.SearchString" asp-route-genreId="@Model.GenreId" asp-route-platformId="@Model.PlatformId" class="btn btn-outline-light">Цена</a>
+    </div>
+    @if (User.IsInRole("Admin")) { <a asp-action="Create" class="btn btn-success">Добавить игру</a> }
 </div>
 
-<div class="row">
-    @if (!Model.Any())
-    {
-        <div class="col-12">
-            <div class="alert alert-warning text-center">
-                Игры не найдены
+<div class="row g-4">
+@foreach (var game in Model.Items)
+{
+    <div class="col-md-6 col-lg-4">
+        <div class="card game-card h-100">
+            <img src="@(string.IsNullOrWhiteSpace(game.CoverImageUrl) ? "/images/games/witcher3.jpg" : game.CoverImageUrl)" class="card-img-top" alt="@game.Title" />
+            <div class="card-body d-flex flex-column">
+                <h5>@game.Title</h5>
+                <p class="text-secondary small mb-1">@game.Genre?.Name · @(game.Publisher?.Name ?? "Unknown")</p>
+                <p class="small mb-2">@string.Join(", ", game.Platforms.Select(p => p.Name))</p>
+                <p class="fw-bold mt-auto">@game.Price.ToString("0.00") ₽</p>
+                <a asp-action="Details" asp-route-id="@game.Id" class="btn btn-primary mb-2">Подробнее</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="d-grid gap-2">
+                        <form asp-controller="Cart" asp-action="Add" method="post">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@game.Id" /><button class="btn btn-outline-success w-100">В корзину</button></form>
+                        <form asp-controller="Cart" asp-action="BuyNow" method="post">@Html.AntiForgeryToken()<input type="hidden" name="gameId" value="@game.Id" /><button class="btn btn-success w-100">Купить</button></form>
+                    </div>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="d-flex gap-2 mt-2"><a asp-action="Edit" asp-route-id="@game.Id" class="btn btn-sm btn-warning w-100">Ред.</a><a asp-action="Delete" asp-route-id="@game.Id" class="btn btn-sm btn-danger w-100">Удалить</a></div>
+                }
             </div>
         </div>
-    }
-    else
-    {
-        @foreach (var game in Model)
-        {
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    @if (!string.IsNullOrEmpty(game.CoverImageUrl))
-                    {
-                        <img src="@game.CoverImageUrl"
-                             class="card-img-top"
-                             alt="@game.Title"
-                             style="height: 300px; object-fit: cover;" />
-                    }
-                    else
-                    {
-                        <div class="d-flex align-items-center justify-content-center bg-light text-muted"
-                             style="height: 300px;">
-                            Нет изображения
-                        </div>
-                    }
-
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">@game.Title</h5>
-
-                        <p class="card-text mb-1">
-                            <strong>Жанр:</strong> @game.Genre?.Name
-                        </p>
-
-                        <p class="card-text mb-1">
-                            <strong>Издатель:</strong> @(game.Publisher?.Name ?? "Не указан")
-                        </p>
-
-                        <p class="card-text mb-1">
-                            <strong>Платформы:</strong> @string.Join(", ", game.Platforms.Select(p => p.Name))
-                        </p>
-
-                        <p class="card-text mb-1">
-                            <strong>Рейтинг:</strong> @(game.Rating?.ToString() ?? "Нет оценки")
-                        </p>
-
-                        <p class="card-text mb-3">
-                            <strong>Остаток:</strong> @game.Stock
-                        </p>
-
-                        <div class="mt-auto">
-                            <p class="fs-5 fw-bold">@game.Price.ToString("0.00") ₽</p>
-
-                            <a asp-action="Details" asp-route-id="@game.Id" class="btn btn-primary w-100">
-                                Подробнее
-                            </a>
-                            <div class="d-grid gap-2">
-                                <a asp-action="Edit" asp-route-id="@game.Id" class="btn btn-outline-warning">
-                                    Редактировать
-                                </a>
-                                <a asp-action="Delete" asp-route-id="@game.Id" class="btn btn-outline-danger">
-                                    Удалить
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-    }
+    </div>
+}
 </div>
+
+@if (Model.TotalPages > 1)
+{
+<nav class="mt-4"><ul class="pagination justify-content-center">
+@for (var i = 1; i <= Model.TotalPages; i++)
+{
+<li class="page-item @(Model.Page == i ? "active" : "")"><a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-searchString="@Model.SearchString" asp-route-genreId="@Model.GenreId" asp-route-platformId="@Model.PlatformId" asp-route-sortOrder="@Model.SortOrder">@i</a></li>
+}
+</ul></nav>
+}
